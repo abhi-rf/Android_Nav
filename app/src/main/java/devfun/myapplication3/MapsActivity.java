@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 
 
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -60,6 +61,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     ArrayList<LatLng> MarkerPoints;
+    GoogleMap map;
+    GoogleMap map2;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     Marker mCurrLocationMarker;
@@ -99,21 +102,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             public static final String TAG = "Tag" ;
 
-            //Popup Menu
-            public void showPopup(View v) {
-                PopupMenu popup = new PopupMenu(MapsActivity.this, v);
-                MenuInflater inflater = popup.getMenuInflater();
-                inflater.inflate(R.menu.actions, popup.getMenu());
-                popup.show();
 
-            }
+
 
 
             //Search Bars
             @Override
             public void onPlaceSelected(Place place) {
                 // TODO: Get info about the selected place.
-                Toast.makeText(getApplicationContext(),"Place Message",Toast.LENGTH_LONG).show();
+                map.addMarker(new MarkerOptions()
+                        .position(place.getLatLng()));
+                MarkerPoints.add(place.getLatLng());
+                Toast.makeText(getApplicationContext(),"Place: " + place.getName(),Toast.LENGTH_LONG).show();
                 Log.i(TAG, "Place: " + place.getName());
 
             }
@@ -122,6 +122,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onError(Status status) {
                 // TODO: Handle the error.
                // Log.i(TAG, "An error occurred: " + status);
+                Toast.makeText(getApplicationContext(),status.toString(), Toast.LENGTH_LONG).show();
+            }
+        });
+
+        PlaceAutocompleteFragment autocompleteFragment2 = (PlaceAutocompleteFragment)
+                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment_2);
+
+        autocompleteFragment2.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            public static final String TAG = "Tag" ;
+
+
+            //Search Bar2
+            @Override
+            public void onPlaceSelected(Place place) {
+                // TODO: Get info about the selected place.
+                map.addMarker(new MarkerOptions()
+                        .position(place.getLatLng()));
+                MarkerPoints.add(place.getLatLng());
+                Toast.makeText(getApplicationContext(),"Place: " + place.getName(),Toast.LENGTH_LONG).show();
+                Log.i(TAG, "Place: " + place.getName());
+
+            }
+
+            @Override
+            public void onError(Status status) {
+                // TODO: Handle the error.
+                // Log.i(TAG, "An error occurred: " + status);
                 Toast.makeText(getApplicationContext(),status.toString(), Toast.LENGTH_LONG).show();
             }
         });
@@ -142,19 +169,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
+        map=googleMap;
+        map2=googleMap;
         //Initialize Google Play Services
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 buildGoogleApiClient();
-                mMap.setMyLocationEnabled(true);
+                map.setMyLocationEnabled(true);
             }
         } else {
             buildGoogleApiClient();
-            mMap.setMyLocationEnabled(true);
+            map.setMyLocationEnabled(true);
         }
+
+
+        //Checks, whether start and end locations are captured
+        if (MarkerPoints.size() >= 2) {
+            LatLng origin = MarkerPoints.get(0);
+            LatLng dest = MarkerPoints.get(1);
+
+            // Getting URL to the Google Directions API
+            String url = getUrl(origin, dest);
+            Log.d("onMapClick", url.toString());
+            FetchUrl FetchUrl = new FetchUrl();
+
+            // Start downloading json data from Google Directions API
+            FetchUrl.execute(url);
+            //move map camera
+            map.moveCamera(CameraUpdateFactory.newLatLng(origin));
+            map.animateCamera(CameraUpdateFactory.zoomTo(11));
+        }
+
 
         // Setting onclick event listener for the map
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -191,22 +238,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 // Add new marker to the Google Map Android API V2
                 mMap.addMarker(options);
 
-                // Checks, whether start and end locations are captured
-                if (MarkerPoints.size() >= 2) {
-                    LatLng origin = MarkerPoints.get(0);
-                    LatLng dest = MarkerPoints.get(1);
 
-                    // Getting URL to the Google Directions API
-                    String url = getUrl(origin, dest);
-                    Log.d("onMapClick", url.toString());
-                    FetchUrl FetchUrl = new FetchUrl();
-
-                    // Start downloading json data from Google Directions API
-                    FetchUrl.execute(url);
-                    //move map camera
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(origin));
-                    mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
-                }
 
             }
         });
@@ -416,7 +448,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             // Drawing polyline in the Google Map for the i-th route
             if (lineOptions != null) {
-                mMap.addPolyline(lineOptions);
+                map.addPolyline(lineOptions);
             } else {
                 Log.d("onPostExecute", "without Polylines drawn");
             }
