@@ -17,6 +17,7 @@ import android.support.v7.widget.PopupMenu;
 import android.util.Log;
 import android.view.MenuInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
@@ -69,6 +70,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Marker mCurrLocationMarker;
     LocationRequest mLocationRequest;
     LatLng origin;
+    String mode = "mode=driving";
     LatLng dest;
 
     /**
@@ -168,32 +170,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v)
             {
 
+                Route();
 
-                // Getting URL to the Google Directions API
-                String url = getUrl(origin, dest);
-                Log.d("onMapClick", url.toString());
-                FetchUrl FetchUrl = new FetchUrl();
+            }
+        });
 
-                // Start downloading json data from Google Directions API
-                FetchUrl.execute(url);
-                //move map camera
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(origin));
-                mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+        Button button1 = (Button) findViewById(R.id.tv3);
 
-                mMap.clear();
-                map.clear();
+        button1.setOnClickListener(new View.OnClickListener()
+        {
+            public void onClick(View v)
+            {
 
-                mMap.addMarker(new MarkerOptions().position(origin));
-                mMap.addMarker(new MarkerOptions().position(dest));
+                mode="mode=walking";
+                Route();
 
             }
         });
 
 
 
+
     }
 
+public void Route ()
+{
+    // Getting URL to the Google Directions API
+    String url = getUrl(origin, dest);
+    Log.d("onMapClick", url.toString());
+    FetchUrl FetchUrl = new FetchUrl();
 
+    // Start downloading json data from Google Directions API
+    FetchUrl.execute(url);
+    //move map camera
+    mMap.moveCamera(CameraUpdateFactory.newLatLng(origin));
+    mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+
+    mMap.clear();
+    map.clear();
+
+    mMap.addMarker(new MarkerOptions().position(origin));
+    mMap.addMarker(new MarkerOptions().position(dest));
+
+
+}
 
     /**
      * Manipulates the map once available.
@@ -284,8 +304,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Sensor enabled
         String sensor = "sensor=false";
 
+
         // Building the parameters to the web service
-        String parameters = str_origin + "&" + str_dest + "&" + sensor;
+        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&" + mode;
 
         // Output format
         String output = "json";
