@@ -84,7 +84,15 @@
         android:layout_below="@+id/card_view"
         android:text="Walk"
         />
-
+    
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:id="@+id/fab"
+        android:layout_alignParentBottom="true"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+                />
 
 
 </RelativeLayout>

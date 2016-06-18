@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.Manifest;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -67,7 +68,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Location mLastLocation;
     Marker mCurrLocationMarker;
     LocationRequest mLocationRequest;
-
+    LatLng origin;
+    LatLng dest;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -96,6 +98,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 
+        MarkerPoints.clear();
+
         PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
 
@@ -110,9 +114,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onPlaceSelected(Place place) {
                 // TODO: Get info about the selected place.
-                map.addMarker(new MarkerOptions()
-                        .position(place.getLatLng()));
+                origin = place.getLatLng();
                 MarkerPoints.add(place.getLatLng());
+                mMap.addMarker(new MarkerOptions()
+                        .position(place.getLatLng()));
+
                 Toast.makeText(getApplicationContext(),"Place: " + place.getName(),Toast.LENGTH_LONG).show();
                 Log.i(TAG, "Place: " + place.getName());
 
@@ -137,9 +143,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onPlaceSelected(Place place) {
                 // TODO: Get info about the selected place.
-                map.addMarker(new MarkerOptions()
-                        .position(place.getLatLng()));
+                dest = place.getLatLng();
                 MarkerPoints.add(place.getLatLng());
+                mMap.addMarker(new MarkerOptions()
+                        .position(place.getLatLng()));
+
                 Toast.makeText(getApplicationContext(),"Place: " + place.getName(),Toast.LENGTH_LONG).show();
                 Log.i(TAG, "Place: " + place.getName());
 
@@ -152,6 +160,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Toast.makeText(getApplicationContext(),status.toString(), Toast.LENGTH_LONG).show();
             }
         });
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
+        fab.setOnClickListener(new View.OnClickListener()
+        {
+            public void onClick(View v)
+            {
+
+
+                // Getting URL to the Google Directions API
+                String url = getUrl(origin, dest);
+                Log.d("onMapClick", url.toString());
+                FetchUrl FetchUrl = new FetchUrl();
+
+                // Start downloading json data from Google Directions API
+                FetchUrl.execute(url);
+                //move map camera
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(origin));
+                mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+
+                mMap.clear();
+                map.clear();
+
+                mMap.addMarker(new MarkerOptions().position(origin));
+                mMap.addMarker(new MarkerOptions().position(dest));
+
+            }
+        });
+
+
 
     }
 
@@ -181,69 +219,58 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         } else {
             buildGoogleApiClient();
-            map.setMyLocationEnabled(true);
+            mMap.setMyLocationEnabled(true);
         }
 
-
-        //Checks, whether start and end locations are captured
-        if (MarkerPoints.size() >= 2) {
-            LatLng origin = MarkerPoints.get(0);
-            LatLng dest = MarkerPoints.get(1);
-
-            // Getting URL to the Google Directions API
-            String url = getUrl(origin, dest);
-            Log.d("onMapClick", url.toString());
-            FetchUrl FetchUrl = new FetchUrl();
-
-            // Start downloading json data from Google Directions API
-            FetchUrl.execute(url);
-            //move map camera
-            map.moveCamera(CameraUpdateFactory.newLatLng(origin));
-            map.animateCamera(CameraUpdateFactory.zoomTo(11));
-        }
 
 
         // Setting onclick event listener for the map
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+     /**   mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
             @Override
             public void onMapClick(LatLng point) {
 
-                // Already two locations
-                if (MarkerPoints.size() > 1) {
-                    MarkerPoints.clear();
-                    mMap.clear();
-                }
+
 
                 // Adding new item to the ArrayList
-                MarkerPoints.add(point);
+                //MarkerPoints.add(point);
 
                 // Creating MarkerOptions
-                MarkerOptions options = new MarkerOptions();
+                //MarkerOptions options = new MarkerOptions();
 
                 // Setting the position of the marker
-                options.position(point);
+                //options.position(point);
 
                 /**
                  * For the start location, the color of marker is GREEN and
                  * for the end location, the color of marker is RED.
                  */
-                if (MarkerPoints.size() == 1) {
-                    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                } else if (MarkerPoints.size() == 2) {
-                    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                }
+               // if (MarkerPoints.size() == 1) {
+                 //   options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                //} else if (MarkerPoints.size() == 2) {
+                //    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                //}
 
 
                 // Add new marker to the Google Map Android API V2
-                mMap.addMarker(options);
+             //   mMap.addMarker(options);
 
 
 
-            }
-        });
+           // }
+      //  });
+
+        //Checks, whether start and end locations are captured
+
+       // Toast.makeText(getApplicationContext(),"Location Check", Toast.LENGTH_LONG).show();
+        //LatLng origin = MarkerPoints.get(0);
+        //LatLng dest = MarkerPoints.get(1);
+
 
     }
+
+
+
 
     private String getUrl(LatLng origin, LatLng dest) {
 
@@ -448,7 +475,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             // Drawing polyline in the Google Map for the i-th route
             if (lineOptions != null) {
-                map.addPolyline(lineOptions);
+                mMap.addPolyline(lineOptions);
             } else {
                 Log.d("onPostExecute", "without Polylines drawn");
             }
